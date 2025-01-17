@@ -22,4 +22,14 @@ Thumbs.db
 *.ipynb
 
 # Project specific
-neo_monitor/ 
+neo_monitor/
+
+# Environment variables
+.env
+.env.local
+.env.*
+
+# API Keys and Secrets
+*.pem
+*.key
+config.json 

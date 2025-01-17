@@ -4,6 +4,10 @@ import pandas as pd
 from utils.data_processor import NEODataProcessor
 from utils.data_streamer import NEODataStreamer
 import numpy as np
+import os
+from dotenv import load_dotenv
+
+load_dotenv()  # Load environment variables from .env file
 
 app = Flask(__name__)
 CORS(app)
@@ -12,7 +16,7 @@ CORS(app)
 data_processor = NEODataProcessor('../nasa.csv')
 
 # Add at the top of the file
-NASA_API_KEY = 'nWSJhOSJAnOoxzQ5SKbT8qHF0f83fxqd9DNTR2hw'  # Replace with your API key
+NASA_API_KEY = os.getenv('NASA_API_KEY')
 
 # Update streamer initialization
 streamer = NEODataStreamer(api_key=NASA_API_KEY)
