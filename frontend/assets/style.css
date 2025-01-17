@@ -1,0 +1,48 @@
+/* Dashboard styling */
+.stApp {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.metric-card {
+    background-color: #f0f2f6;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    transition: transform 0.2s ease;
+}
+
+.big-font {
+    font-size: 24px !important;
+    font-weight: bold;
+    color: #0e1117;
+}
+
+/* Table styling */
+.dataframe {
+    font-size: 12px;
+}
+
+/* Chart styling */
+.plotly-chart {
+    margin-top: 1rem;
+    margin-bottom: 2rem;
+}
+
+/* Button styling */
+.stButton>button {
+    width: 100%;
+    border-radius: 5px;
+    background-color: #ff4b4b;
+    color: white;
+}
+
+.stButton>button:hover {
+    background-color: #ff3333;
+    border-color: #ff3333;
+} 
