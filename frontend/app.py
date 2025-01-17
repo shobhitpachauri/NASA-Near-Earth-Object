@@ -29,7 +29,7 @@ def main():
     st.markdown("Real-time monitoring of Near-Earth Objects and potential hazards")
     
     if st.button("🔄 Refresh Data"):
-        st.experimental_rerun()
+        st.rerun()
     
     stats, objects, hazardous = load_data()
     
