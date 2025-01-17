@@ -32,4 +32,4 @@ neo_monitor/
 # API Keys and Secrets
 *.pem
 *.key
-config.json 
+config.json .env
