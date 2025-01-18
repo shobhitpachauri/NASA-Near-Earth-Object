@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
 import requests
 import numpy as np
@@ -15,45 +14,47 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-def create_radar_plot(hazardous_df, current_time):
-    """Create scientific radar plot for hazardous objects"""
+def create_threshold_plot(hazardous_df, current_time):
+    """Create a simplified threshold plot for hazardous objects"""
     if hazardous_df.empty:
         return None
-        
-    def normalize(x, min_val, max_val):
-        return (x - min_val) / (max_val - min_val)
-    
+
+    # Define thresholds
+    velocity_threshold = 50000  # Example threshold for velocity (in km/h)
+    distance_threshold = 200000  # Example threshold for miss distance (in km)
+
+    # Create figure
     fig = go.Figure()
-    
-    # Only plot the 5 most recent objects
-    for _, neo in hazardous_df.tail(5).iterrows():
-        velocity_norm = normalize(neo['relative_velocity'], 20000, 100000)
-        distance_norm = 1 - normalize(neo['miss_distance'], 10000, 500000)
-        diameter_norm = normalize(neo['est_diameter_min'], 0.1, 2.0)
-        risk_score = (velocity_norm + distance_norm + diameter_norm) / 3
-        
-        fig.add_trace(go.Scatterpolar(
-            r=[velocity_norm, distance_norm, diameter_norm, risk_score, velocity_norm],
-            theta=['Velocity', 'Proximity', 'Size', 'Risk Score', 'Velocity'],
-            name=f"{neo['name']} ({risk_score:.2f})",
-            fill='toself',
-            opacity=0.6
+
+    # Add threshold lines
+    fig.add_hline(y=velocity_threshold, line_dash="dash", line_color="red", 
+                  annotation_text="Velocity Threshold", annotation_position="top right")
+    fig.add_vline(x=distance_threshold, line_dash="dash", line_color="blue", 
+                   annotation_text="Distance Threshold", annotation_position="top right")
+
+    # Plot each hazardous object
+    for _, neo in hazardous_df.iterrows():
+        color = 'red' if neo['relative_velocity'] > velocity_threshold else 'green'
+        fig.add_trace(go.Scatter(
+            x=[neo['miss_distance']], 
+            y=[neo['relative_velocity']],
+            mode='markers+text',
+            marker=dict(size=10, color=color),
+            text=[f"{neo['name']} ({neo['relative_velocity']:.0f} km/h)"],
+            textposition="top center"
         ))
-    
+
+    # Update layout
     fig.update_layout(
-        polar=dict(
-            radialaxis=dict(
-                visible=True,
-                range=[0, 1]
-            )
-        ),
-        showlegend=True,
         title=f"NEO Hazard Analysis - {current_time.strftime('%Y-%m-%d %H:%M:%S')}",
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        height=700
+        xaxis_title="Miss Distance (km)",
+        yaxis_title="Relative Velocity (km/h)",
+        showlegend=False,
+        height=700,
+        xaxis=dict(range=[0, max(hazardous_df['miss_distance']) * 1.1]),
+        yaxis=dict(range=[0, max(hazardous_df['relative_velocity']) * 1.1])
     )
-    
+
     return fig
 
 def main():
@@ -69,11 +70,11 @@ def main():
     if 'hazardous_history' not in st.session_state:
         st.session_state.hazardous_history = pd.DataFrame()
     
-    # Create fixed containers
-    header = st.empty()
-    metrics = st.empty()
-    radar = st.empty()
-    table = st.empty()
+    # Create placeholders for dynamic content
+    header_placeholder = st.empty()
+    metrics_placeholder = st.empty()
+    threshold_plot_placeholder = st.empty()
+    table_placeholder = st.empty()
     details_expander = st.expander("View Historical Data", expanded=False)
     
     while True:
@@ -81,12 +82,12 @@ def main():
             current_time = datetime.now()
             
             # Update header with current time
-            header.markdown(f"""
+            header_placeholder.markdown(f"""
             ### Real-time Analysis of Potentially Hazardous Objects
             Last updated: {current_time.strftime('%Y-%m-%d %H:%M:%S')}
             """)
             
-            # Fetch new data
+            # Fetch NEO data
             response = requests.get('http://localhost:5000/api/objects')
             data = response.json()
             df = pd.DataFrame(data)
@@ -102,7 +103,7 @@ def main():
             ]).drop_duplicates(subset=['name']).tail(10)
             
             # Update metrics in a single container
-            with metrics.container():
+            with metrics_placeholder.container():
                 col1, col2, col3, col4 = st.columns(4)
                 
                 if st.session_state.last_data is not None:
@@ -135,13 +136,13 @@ def main():
                     None
                 )
             
-            # Update radar plot in fixed container
+            # Update threshold plot in fixed container
             if not hazardous_df.empty:
-                radar_fig = create_radar_plot(hazardous_df, current_time)
-                if radar_fig:
-                    radar.plotly_chart(radar_fig, use_container_width=True)
+                threshold_fig = create_threshold_plot(hazardous_df, current_time)
+                if threshold_fig:
+                    threshold_plot_placeholder.plotly_chart(threshold_fig, use_container_width=True)
             else:
-                radar.info("No hazardous objects currently detected.")
+                threshold_plot_placeholder.info("No hazardous objects currently detected.")
             
             # Update recent hazards table
             if not hazardous_df.empty:
@@ -164,9 +165,9 @@ def main():
                     'Estimated Diameter (km)': '{:.2f}'
                 })
                 
-                table.dataframe(styled_df, hide_index=True)
+                table_placeholder.dataframe(styled_df, hide_index=True)
             else:
-                table.info("No hazardous objects in current scan.")
+                table_placeholder.info("No hazardous objects in current scan.")
             
             # Update historical data in expander
             with details_expander:
